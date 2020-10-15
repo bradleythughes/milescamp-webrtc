@@ -1,0 +1,1 @@
+export const USER_MEDIA_STREAM_CHANGED = "UserMedia/STREAM_CHANGED";

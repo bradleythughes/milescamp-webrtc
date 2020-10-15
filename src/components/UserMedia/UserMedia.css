@@ -1,0 +1,14 @@
+.UserMedia {
+  position: absolute;
+  top: 2em;
+  right: 2em;
+  max-width: 200px;
+  box-shadow: 2px 2px 8px 4px #0000003f;
+}
+
+.UserMedia-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+}
