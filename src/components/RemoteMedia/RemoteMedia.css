@@ -1,0 +1,9 @@
+.RemoteMedia {
+  display: flex;
+  height: 100vh;
+}
+
+.RemoteMedia-video {
+  width: 100%;
+  object-fit: cover;
+}

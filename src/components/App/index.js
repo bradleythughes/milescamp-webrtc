@@ -1,26 +1,13 @@
 import React from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import RemoteMedia from "../RemoteMedia";
 import UserMedia from "../UserMedia";
+import "./App.css";
 
 function App() {
   return (
     <div className="App">
+      <RemoteMedia />
       <UserMedia />
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
     </div>
   );
 }
