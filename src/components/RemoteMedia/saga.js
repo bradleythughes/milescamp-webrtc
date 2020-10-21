@@ -9,7 +9,9 @@ import { USER_MEDIA_STREAM_CHANGED } from "../UserMedia/constants";
 import { createUserMediaSelector } from "../UserMedia/selectors";
 
 function* startPeerConnectionSaga() {
-  const peerConnection = new RTCPeerConnection();
+  const peerConnection = new RTCPeerConnection({
+    iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
+  });
 
   const userMedia = yield select(createUserMediaSelector());
   userMedia.stream.getTracks().forEach((track) => peerConnection.addTrack(track, userMedia.stream));
