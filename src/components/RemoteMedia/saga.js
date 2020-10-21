@@ -1,7 +1,7 @@
 import { eventChannel } from "redux-saga";
 import { all, call, cancel, fork, put, select, take, takeEvery } from "redux-saga/effects";
 import { peerConnectionOnClose, peerConnectionOnOpen } from "./actions";
-import { PEER_CONNECTION_ON_CLOSE } from "./constants";
+import { PEER_CONNECTION_ON_OPEN, PEER_CONNECTION_ON_CLOSE } from "./constants";
 import { createRemoteMediaSelector } from "./selectors";
 import { webSocketSendMessage } from "../App/actions";
 import { WEB_SOCKET_ON_OPEN, WEB_SOCKET_ON_MESSAGE } from "../App/constants";
@@ -31,6 +31,13 @@ function* startPeerConnectionSaga() {
   yield cancel();
 }
 
+function* createOffer() {
+  const { peerConnection } = yield select(createRemoteMediaSelector());
+  const offer = yield peerConnection.createOffer();
+  yield peerConnection.setLocalDescription(offer);
+  return offer;
+}
+
 function* closePeerConnection() {
   const { peerConnectionChannel } = yield select(createRemoteMediaSelector());
   peerConnectionChannel.close();
@@ -41,6 +48,10 @@ export default function* () {
 
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/start`, function* () {
     yield fork(startPeerConnectionSaga);
+    yield take(PEER_CONNECTION_ON_OPEN);
+
+    const offer = yield call(createOffer);
+    yield put(webSocketSendMessage({ type: "offer", offer }));
   });
 
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/close`, closePeerConnection);
