@@ -3,7 +3,7 @@ import { userMediaStreamChanged } from "./actions";
 
 export default function* () {
   try {
-    const stream = yield navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    const stream = yield navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
     yield put(userMediaStreamChanged(stream));
   } catch (error) {
     console.error("Failed to get user media", { error });
