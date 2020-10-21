@@ -1,3 +1,15 @@
 .App {
+  position: relative;
   text-align: center;
+}
+
+.App-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-height: 30vh;
+  min-width: 30vw;
+  padding: 3em;
+  box-shadow: 2px 2px 8px 4px #0000003f;
 }
