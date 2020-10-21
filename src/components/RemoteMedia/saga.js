@@ -10,7 +10,17 @@ import { createUserMediaSelector } from "../UserMedia/selectors";
 
 function* startPeerConnectionSaga() {
   const peerConnection = new RTCPeerConnection({
+    /*
+     * Set some RTCConfiguration options. These are not important for this example, but it's useful
+     * to see what they do.
+     */
+    bundlePolicy: "max-bundle", // send audio and video on the same network port
+    sdpSemantics: "unified-plan", // SDP format that more easily allows for media changes
+    rtcpMuxPolicy: "require", // RTCP feedback must be multiplexed in the media stream
     iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
+
+    // Cannot use this, since we do not have a turn: URL in the iceServers list.
+    // iceTransportPolicy: "relay",
   });
 
   const userMedia = yield select(createUserMediaSelector());
