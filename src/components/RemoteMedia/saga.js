@@ -1,6 +1,6 @@
 import { eventChannel } from "redux-saga";
 import { all, call, cancel, fork, put, select, take, takeEvery } from "redux-saga/effects";
-import { peerConnectionOnClose, peerConnectionOnOpen } from "./actions";
+import { peerConnectionOnClose, peerConnectionOnOpen, remoteMediaStreamChanged } from "./actions";
 import { PEER_CONNECTION_ON_OPEN, PEER_CONNECTION_ON_CLOSE } from "./constants";
 import { createRemoteMediaSelector } from "./selectors";
 import { webSocketSendMessage } from "../App/actions";
@@ -15,8 +15,14 @@ function* startPeerConnectionSaga() {
   userMedia.stream.getTracks().forEach((track) => peerConnection.addTrack(track, userMedia.stream));
 
   const peerConnectionChannel = yield call(eventChannel, (emit) => {
+    peerConnection.ontrack = ({ streams }) => {
+      const [stream] = streams;
+      emit(remoteMediaStreamChanged(stream));
+    };
+
     return () => {
       peerConnection.close();
+      emit(remoteMediaStreamChanged(null));
       emit(peerConnectionOnClose());
     };
   });
@@ -38,6 +44,14 @@ function* createOffer() {
   return offer;
 }
 
+function* createAnswerFromOffer(offer) {
+  const { peerConnection } = yield select(createRemoteMediaSelector());
+  yield peerConnection.setRemoteDescription(offer);
+  const answer = yield peerConnection.createAnswer();
+  yield peerConnection.setLocalDescription(answer);
+  return answer;
+}
+
 function* closePeerConnection() {
   const { peerConnectionChannel } = yield select(createRemoteMediaSelector());
   peerConnectionChannel.close();
@@ -52,6 +66,13 @@ export default function* () {
 
     const offer = yield call(createOffer);
     yield put(webSocketSendMessage({ type: "offer", offer }));
+  });
+  yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/offer`, function* ({ offer }) {
+    yield fork(startPeerConnectionSaga);
+    yield take(PEER_CONNECTION_ON_OPEN);
+
+    const answer = yield call(createAnswerFromOffer, offer);
+    yield put(webSocketSendMessage({ type: "answer", answer }));
   });
 
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/close`, closePeerConnection);
