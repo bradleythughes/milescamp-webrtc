@@ -52,6 +52,11 @@ function* createAnswerFromOffer(offer) {
   return answer;
 }
 
+function* useAnswer(answer) {
+  const { peerConnection } = yield select(createRemoteMediaSelector());
+  yield peerConnection.setRemoteDescription(answer);
+}
+
 function* closePeerConnection() {
   const { peerConnectionChannel } = yield select(createRemoteMediaSelector());
   peerConnectionChannel.close();
@@ -74,7 +79,9 @@ export default function* () {
     const answer = yield call(createAnswerFromOffer, offer);
     yield put(webSocketSendMessage({ type: "answer", answer }));
   });
-
+  yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/answer`, function* ({ answer }) {
+    yield call(useAnswer, answer);
+  });
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/close`, closePeerConnection);
 
   yield put(webSocketSendMessage({ type: "start" }));
