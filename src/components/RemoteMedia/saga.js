@@ -19,6 +19,8 @@ function* startPeerConnectionSaga() {
       const [stream] = streams;
       emit(remoteMediaStreamChanged(stream));
     };
+    peerConnection.onicecandidate = ({ candidate }) =>
+      emit(webSocketSendMessage({ type: "icecandidate", candidate }));
 
     return () => {
       peerConnection.close();
@@ -57,6 +59,13 @@ function* useAnswer(answer) {
   yield peerConnection.setRemoteDescription(answer);
 }
 
+function* addIceCandidate(candidate) {
+  const { peerConnection } = yield select(createRemoteMediaSelector());
+  if (candidate) {
+    yield peerConnection.addIceCandidate(candidate);
+  }
+}
+
 function* closePeerConnection() {
   const { peerConnectionChannel } = yield select(createRemoteMediaSelector());
   peerConnectionChannel.close();
@@ -72,6 +81,7 @@ export default function* () {
     const offer = yield call(createOffer);
     yield put(webSocketSendMessage({ type: "offer", offer }));
   });
+
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/offer`, function* ({ offer }) {
     yield fork(startPeerConnectionSaga);
     yield take(PEER_CONNECTION_ON_OPEN);
@@ -79,8 +89,12 @@ export default function* () {
     const answer = yield call(createAnswerFromOffer, offer);
     yield put(webSocketSendMessage({ type: "answer", answer }));
   });
+
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/answer`, function* ({ answer }) {
     yield call(useAnswer, answer);
+  });
+  yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/icecandidate`, function* ({ candidate }) {
+    yield call(addIceCandidate, candidate);
   });
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/close`, closePeerConnection);
 
