@@ -74,12 +74,25 @@ function* closePeerConnection() {
 export default function* () {
   yield all([take(WEB_SOCKET_ON_OPEN), take(USER_MEDIA_STREAM_CHANGED)]);
 
-  yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/start`, function* () {
-    yield fork(startPeerConnectionSaga);
-    yield take(PEER_CONNECTION_ON_OPEN);
+  // use a timestamps and a random nonce to resolve "start" message collisions
+  const timestamp = new Date().toISOString();
+  const nonce = Math.random();
 
-    const offer = yield call(createOffer);
-    yield put(webSocketSendMessage({ type: "offer", offer }));
+  yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/start`, function* ({
+    timestamp: remoteTimestamp,
+    nonce: remoteNonce,
+  }) {
+    /*
+     * The client that sent "start" first makes the offer. If both sent "start" at the same time,
+     * then resolve the start conflict using the nonce.
+     */
+    if (timestamp < remoteTimestamp || (timestamp === remoteTimestamp && nonce < remoteNonce)) {
+      yield fork(startPeerConnectionSaga);
+      yield take(PEER_CONNECTION_ON_OPEN);
+
+      const offer = yield call(createOffer);
+      yield put(webSocketSendMessage({ type: "offer", offer }));
+    }
   });
 
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/offer`, function* ({ offer }) {
@@ -98,5 +111,5 @@ export default function* () {
   });
   yield takeEvery(`${WEB_SOCKET_ON_MESSAGE}/close`, closePeerConnection);
 
-  yield put(webSocketSendMessage({ type: "start" }));
+  yield put(webSocketSendMessage({ type: "start", timestamp, nonce }));
 }
