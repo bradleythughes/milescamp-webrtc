@@ -1,1 +1,3 @@
 export const USER_MEDIA_STREAM_CHANGED = "UserMedia/STREAM_CHANGED";
+export const USER_MUTE_TOGGLED = "UserMedia/USER_MUTE_TOGGLED";
+export const USER_VIDEO_TOGGLED = "UserMedia/USER_VIDEO_TOGGLED";
